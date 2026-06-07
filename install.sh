@@ -19,6 +19,7 @@ CONFIG_FILE="${MANTIS_CONFIG_FILE:-$STATE_DIR/config}"
 RUNTIME_ROOT="${MANTIS_RUNTIME_ROOT:-$STATE_DIR/runtime}"
 CONTROL_PLANE_URL="${MANTIS_CONTROL_PLANE_URL:-}"
 BUNDLE_MANIFEST_URL="${MANTIS_BUNDLE_MANIFEST_URL:-}"
+DEFAULT_CONTROL_PLANE_URL="${MANTIS_DEFAULT_CONTROL_PLANE_URL:-https://erebora.org/mantis}"
 ACTIVATION_TOKEN="${MANTIS_ACTIVATION_TOKEN:-}"
 INVITE="${MANTIS_INVITE:-}"
 
@@ -104,6 +105,13 @@ curl_fetch() {
     /*) cp "$url" "$out"; return ;;
   esac
   local args=(-fsSL)
+  case "${MANTIS_CURL_IP_MODE:-ipv4}" in
+    ipv4|4) args+=(-4) ;;
+    ipv6|6) args+=(-6) ;;
+    auto|"") ;;
+    *) echo "invalid MANTIS_CURL_IP_MODE: $MANTIS_CURL_IP_MODE" >&2; return 2 ;;
+  esac
+  args+=(--connect-timeout "${MANTIS_CURL_CONNECT_TIMEOUT:-10}" --max-time "${MANTIS_CURL_MAX_TIME:-300}")
   [ -n "$ACTIVATION_TOKEN" ] && args+=(-H "Authorization: Bearer $ACTIVATION_TOKEN")
   [ -n "$INVITE" ] && args+=(-H "X-Mantis-Invite: $INVITE")
   curl "${args[@]}" "$url" -o "$out"
@@ -193,6 +201,12 @@ resolve_relative_bundle_url() {
 
 bootstrap_bundle_install() {
   install_deps python3 tar curl ca-certificates
+  if [ -z "$BUNDLE_MANIFEST_URL$CONTROL_PLANE_URL" ] && [ -n "$ACTIVATION_TOKEN$INVITE" ]; then
+    # WHY: Friend/beta setup is invite-based. If a user supplies only the
+    # invite/token, default to the live control plane rather than failing with a
+    # missing-manifest error.
+    CONTROL_PLANE_URL="$DEFAULT_CONTROL_PLANE_URL"
+  fi
   if [ -z "$BUNDLE_MANIFEST_URL" ] && [ -n "$CONTROL_PLANE_URL" ]; then
     BUNDLE_MANIFEST_URL="${CONTROL_PLANE_URL%/}/api/mantis/bundles/latest.json"
   fi
