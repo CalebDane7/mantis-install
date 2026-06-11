@@ -19,6 +19,12 @@ Server-authorized bundle install shape:
 curl -fsSL https://raw.githubusercontent.com/CalebDane7/mantis-install/main/install.sh | bash -s -- --source bundle --bundle-manifest-url https://erebora.org/mantis/api/mantis/bundles/latest.json --invite MANTIS-XXXX --noninteractive
 ```
 
+The private bundle installer also prepares the Mantis-managed Codex home at
+`~/.mantis/codex-home`. That managed home gets a generated `AGENTS.md`, Mantis
+hooks, Codex memories, `gpt-5.5`, max reasoning, and full-access/no-approval
+automation for `mantis codex`. It does not overwrite vanilla `~/.codex` or
+vanilla `~/.claude`.
+
 Maintainer/private-source install only:
 
 ```bash
