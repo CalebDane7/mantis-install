@@ -106,11 +106,59 @@ brew_package_for_cmd() {
   esac
 }
 
+add_homebrew_to_path() {
+  local candidate
+  for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    if [ -x "$candidate" ]; then
+      eval "$("$candidate" shellenv)"
+      return 0
+    fi
+  done
+  return 1
+}
+
+ensure_macos_homebrew() {
+  local missing_words="$1"
+  local choice auto
+  [ "$(mantis_host_platform)" = "macos" ] || return 1
+  add_homebrew_to_path >/dev/null 2>&1 || true
+  have brew && return 0
+  auto="${MANTIS_AUTO_INSTALL_HOMEBREW:-prompt}"
+  echo "Mantis needs Homebrew on stock macOS to install: $missing_words" >&2
+  case "$auto" in
+    1|yes|YES|true|TRUE) choice="yes" ;;
+    0|no|NO|false|FALSE) choice="no" ;;
+    *)
+      if [ "$NONINTERACTIVE" = "1" ] || [ ! -r /dev/tty ]; then
+        echo "Set MANTIS_AUTO_INSTALL_HOMEBREW=1 to let Mantis install Homebrew automatically, or install Homebrew first:" >&2
+        echo '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"' >&2
+        return 1
+      fi
+      printf "Install Homebrew now using the official Homebrew installer? [y/N]: " >/dev/tty
+      IFS= read -r choice </dev/tty || choice=""
+      ;;
+  esac
+  case "$choice" in
+    y|Y|yes|YES) ;;
+    *) return 1 ;;
+  esac
+  # WHY: stock macOS lacks the Linux package manager Mantis uses elsewhere.
+  # Homebrew's official installer is the supported way to add tmux/ttyd/node
+  # from a single account-bound curl flow without inventing a private package
+  # manager or asking the user to restart from separate manual instructions.
+  if [ "$NONINTERACTIVE" = "1" ] || [ "$auto" = "1" ] || [ "$auto" = "yes" ]; then
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  else
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  fi
+  add_homebrew_to_path >/dev/null 2>&1 || true
+  have brew
+}
+
 install_deps() {
   local packages=()
   local missing=()
-  local cmd pkg platform brew_packages=() missing_after=()
-  local existing already
+  local cmd pkg platform brew_packages="" missing_after=()
   for cmd in "$@"; do
     pkg="$cmd"
     case "$cmd" in
@@ -147,23 +195,29 @@ install_deps() {
       fi
       ;;
     macos)
+      add_homebrew_to_path >/dev/null 2>&1 || true
+      if ! have brew; then
+        ensure_macos_homebrew "${missing[*]}" || {
+          echo "missing required commands: ${missing[*]}" >&2
+          echo "Homebrew is required on stock macOS so Mantis can install python3, tmux, ttyd, curl, and node/npm." >&2
+          exit 1
+        }
+      fi
       if have brew; then
         for cmd in "${missing[@]}"; do
           if pkg="$(brew_package_for_cmd "$cmd")"; then
-            already=0
-            for existing in "${brew_packages[@]}"; do
-              [ "$existing" = "$pkg" ] && already=1 && break
-            done
-            [ "$already" = "1" ] || brew_packages+=("$pkg")
+            case " $brew_packages " in
+              *" $pkg "*) ;;
+              *) brew_packages="${brew_packages:+$brew_packages }$pkg" ;;
+            esac
           fi
         done
-        if [ "${#brew_packages[@]}" -gt 0 ]; then
-          brew install "${brew_packages[@]}"
+        if [ -n "$brew_packages" ]; then
+          # WHY: macOS /bin/bash 3.2 with `set -u` can treat empty arrays as
+          # unbound. Keep the public curl bootstrap on plain words here so a
+          # stock Mac does not fail before the invite installs.
+          brew install $brew_packages
         fi
-      else
-        echo "missing required commands: ${missing[*]}" >&2
-        echo "Install Homebrew or install python3 sqlite3 jq tmux ttyd curl node/npm manually, then rerun Mantis." >&2
-        exit 1
       fi
       ;;
     *)
@@ -399,31 +453,17 @@ bootstrap_bundle_install() {
   [ -n "$CONTROL_PLANE_URL" ] && write_config_key control_plane_url "$CONTROL_PLANE_URL"
   write_auth
 
-  local phone_args=()
-  local root_admin_args=()
-  local interaction_args=()
   # WHY: the public website command pipes into macOS /bin/bash 3.2. Bash 3.2
-  # lacks Bash 4's line-to-array builtin, so build optional arg arrays
-  # directly or Mac users fail before the account-bound invite can install.
-  case "$PHONE_SETUP" in
-    yes) phone_args+=("--setup-phone") ;;
-    skip) phone_args+=("--skip-phone") ;;
-  esac
-  case "$ROOT_ADMIN_SETUP" in
-    yes) root_admin_args+=("--enable-root-admin") ;;
-    skip) root_admin_args+=("--skip-root-admin") ;;
-  esac
-  if [ "$NONINTERACTIVE" = "1" ]; then
-    interaction_args+=("--noninteractive")
-  fi
+  # under `set -u` can throw on empty optional arrays, so optional install args
+  # are emitted as plain words instead of empty array expansions.
   exec bash "$RUNTIME_ROOT/current/install/install-linux.sh" \
     --source bundle \
     --repo-dir "$RUNTIME_ROOT/current" \
     --runtime-root "$RUNTIME_ROOT" \
     --bundle-manifest-url "$BUNDLE_MANIFEST_URL" \
-    "${interaction_args[@]}" \
-    "${root_admin_args[@]}" \
-    "${phone_args[@]}"
+    $(noninteractive_install_args) \
+    $(root_admin_install_args) \
+    $(phone_install_args)
 }
 
 bootstrap_git_install() {
@@ -480,23 +520,12 @@ SSHEOF
     git -C "$REPO_DIR" pull --quiet
   fi
 
-  local phone_args=()
-  local root_admin_args=()
-  local interaction_args=()
   # WHY: keep the legacy deploy-key path usable from macOS /bin/bash 3.2 too;
   # the public invite flow and old private Git flow share this bootstrap file.
-  case "$PHONE_SETUP" in
-    yes) phone_args+=("--setup-phone") ;;
-    skip) phone_args+=("--skip-phone") ;;
-  esac
-  case "$ROOT_ADMIN_SETUP" in
-    yes) root_admin_args+=("--enable-root-admin") ;;
-    skip) root_admin_args+=("--skip-root-admin") ;;
-  esac
-  if [ "$NONINTERACTIVE" = "1" ]; then
-    interaction_args+=("--noninteractive")
-  fi
-  exec bash "$REPO_DIR/install/install-linux.sh" --source git --repo-dir "$REPO_DIR" --deploy-key "$KEY_DEST" "${interaction_args[@]}" "${root_admin_args[@]}" "${phone_args[@]}"
+  exec bash "$REPO_DIR/install/install-linux.sh" --source git --repo-dir "$REPO_DIR" --deploy-key "$KEY_DEST" \
+    $(noninteractive_install_args) \
+    $(root_admin_install_args) \
+    $(phone_install_args)
 }
 
 case "$INSTALL_SOURCE" in

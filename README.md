@@ -19,6 +19,16 @@ Server-authorized bundle install shape:
 curl -fsSL https://raw.githubusercontent.com/CalebDane7/mantis-install/main/install.sh | bash -s -- --source bundle --bundle-manifest-url https://erebora.org/mantis/api/mantis/bundles/latest.json --invite MANTIS-XXXX --noninteractive
 ```
 
+Stock macOS uses the same command. If Homebrew is missing, the installer asks
+to install Homebrew from the official Homebrew installer, then continues with
+the Mantis dependencies.
+
+Stock Windows uses PowerShell plus WSL:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$p=Join-Path $env:TEMP 'mantis-install.ps1'; curl.exe -fsSL 'https://raw.githubusercontent.com/CalebDane7/mantis-install/main/install.ps1' -o $p; & $p -Source bundle -BundleManifestUrl 'https://erebora.org/mantis/api/mantis/bundles/latest.json' -Invite 'MANTIS-XXXX' -SkipRootAdmin"
+```
+
 The private bundle installer also prepares the Mantis-managed Codex home at
 `~/.mantis/codex-home`. That managed home gets a generated `AGENTS.md`, Mantis
 hooks, Codex memories, `gpt-5.5`, max reasoning, and full-access/no-approval
