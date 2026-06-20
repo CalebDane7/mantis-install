@@ -21,7 +21,11 @@ https://erebora.org/mantis/
 - Bare `mantis` can start each model directly: `1` Claude, `2` Codex,
   `3` Antigravity/Gemini.
 - Auto is normal guided mode. Full `/x` is strict mode.
-- After sign-in and setup, check your Mantis email for the remote link.
+- Whenever Mantis starts, it emails your stable Mantis Remote terminal link.
+  Open the newest Mantis email on your phone and tap `Open Mantis Remote`.
+- Phone buttons: Active shows live terminals; Old opens past sessions; Start
+  launches a new session; Stop interrupts current work; Upload sends files;
+  Copy/Paste moves text; Bottom jumps to newest output.
 
 That command includes a private `--invite` token. The bundle manifest is
 protected, so a plain unauthenticated manifest URL is expected to return `401`.
