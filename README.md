@@ -14,7 +14,9 @@ https://erebora.org/mantis/
 
 - Codex is the default main director. It is fast, concise, and best for source
   recovery, dispatch, integration, and proof.
-- Ask Codex to bring in Claude for visual, frontend, and interface work.
+- Mantis was primarily designed for Claude and still helps Claude most with
+  visual, frontend, and interface work. Ask Codex to bring in Claude for that
+  work, or run `mantis claude` / choose `1` when Claude should own the lane.
 - Ask Codex to bring in Antigravity/Gemini for outward-facing copy.
 - Bare `mantis` can start each model directly: `1` Claude, `2` Codex,
   `3` Antigravity/Gemini.
