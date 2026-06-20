@@ -10,6 +10,17 @@ Normal friend/beta install uses the account-generated command from:
 https://erebora.org/mantis/
 ```
 
+## How To Use Mantis
+
+- Codex is the default main director. It is fast, concise, and best for source
+  recovery, dispatch, integration, and proof.
+- Ask Codex to bring in Claude for visual, frontend, and interface work.
+- Ask Codex to bring in Antigravity/Gemini for outward-facing copy.
+- Bare `mantis` can start each model directly: `1` Claude, `2` Codex,
+  `3` Antigravity/Gemini.
+- Auto is normal guided mode. Full `/x` is strict mode.
+- After sign-in and setup, check your Mantis email for the remote link.
+
 That command includes a private `--invite` token. The bundle manifest is
 protected, so a plain unauthenticated manifest URL is expected to return `401`.
 
