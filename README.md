@@ -16,16 +16,17 @@ https://erebora.org/mantis/
   recovery, dispatch, integration, and proof.
 - Mantis was primarily designed for Claude and still helps Claude most with
   visual, frontend, and interface work. Ask Codex to bring in Claude for that
-  work, or run `mantis claude` / choose `1` when Claude should own the lane.
+  work, or run `mantis claude` / choose `2` when Claude should own the lane.
 - Ask Codex to bring in Antigravity/Gemini for outward-facing copy.
-- Bare `mantis` can start each model directly: `1` Claude, `2` Codex,
+- Bare `mantis` can start each model directly: `1` Codex, `2` Claude,
   `3` Antigravity/Gemini.
 - Auto is normal guided mode. Full `/x` is strict mode.
 - Whenever Mantis starts, it emails your stable Mantis Remote terminal link.
   Open the newest Mantis email on your phone and tap `Open Mantis Remote`.
-- Phone buttons: Active shows live terminals; Old opens past sessions; Start
-  launches a new session; Stop interrupts current work; Upload sends files;
-  Copy/Paste moves text; Bottom jumps to newest output.
+- Phone buttons: Active opens live terminals; Old reopens past sessions; New
+  creates a session; Start sends Enter and runs the current prompt; Stop
+  interrupts current work; Upload sends files; Copy/Paste moves text; Bottom
+  jumps to newest output.
 
 That command includes a private `--invite` token. The bundle manifest is
 protected, so a plain unauthenticated manifest URL is expected to return `401`.
