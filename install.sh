@@ -5,7 +5,12 @@
 # This script intentionally contains no private key or license secret.
 # Default path remains the original deploy-key/git installer. The new
 # server-authorized bundle path is explicit/opt-in and never writes ~/.ssh.
-set -euo pipefail
+# WHY: this public entrypoint is copied straight into a Mac user's
+# `curl ... | bash` flow, where `/bin/bash` is still 3.2. Bash 3.2 plus
+# nounset has empty-array edge cases that previously broke the account-bound
+# invite install before Mantis Remote could register, so keep this installer
+# fail-fast without `set -u`.
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd -P 2>/dev/null || printf '.')"
 if [ -f "$SCRIPT_DIR/platform-helpers.sh" ]; then
