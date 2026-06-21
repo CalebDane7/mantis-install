@@ -267,7 +267,9 @@ curl_fetch() {
     /*) cp "$url" "$out"; return ;;
   esac
   local args=(-fsSL)
-  case "${MANTIS_CURL_IP_MODE:-ipv4}" in
+  # WHY: native Mac networks may be IPv6-only or dual-stack. Do not force IPv4
+  # unless the operator explicitly sets MANTIS_CURL_IP_MODE=ipv4.
+  case "${MANTIS_CURL_IP_MODE:-auto}" in
     ipv4|4) args+=(-4) ;;
     ipv6|6) args+=(-6) ;;
     auto|"") ;;
