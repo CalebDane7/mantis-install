@@ -25,9 +25,10 @@ https://erebora.org/mantis/
   Open the newest Mantis email on your phone and tap `Open Mantis Remote`.
 - Android APK setup is automated after the physical phone steps. Run
   `mantis phone apk-guide`, then enable Developer Options, enable USB
-  debugging, connect USB, and approve the debugging prompt on the phone.
-  Mantis installs the newest APK and future `mantis update --auto` checks for
-  APK updates when that phone is reachable.
+  debugging, connect USB, and approve the debugging prompt on the phone. Mantis
+  opens Tailscale or its Play Store page on the authorized phone, then installs
+  the newest APK. Future `mantis update --auto` checks for APK updates when
+  that phone is reachable.
 - Phone buttons: Active opens live terminals; Old reopens past sessions; New
   creates a session; Start sends Enter and runs the current prompt; Stop
   interrupts current work; Upload sends files; Copy/Paste moves text; Bottom
